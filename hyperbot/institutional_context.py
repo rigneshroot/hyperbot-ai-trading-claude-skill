@@ -118,14 +118,14 @@ class InstitutionalContext:
             elif flow == "distribution":
                 return "Caution: Institutional flow diverges from long setup (distribution detected)."
             else:
-                return "Institutional flow is neutral — no directional conviction from smart money."
+                return "Institutional flow is neutral — no directional conviction from institutional participants."
         elif direction == "short":
             if flow == "distribution":
                 return "Institutional flow aligns with short setup (distribution detected)."
             elif flow == "accumulation":
                 return "Caution: Institutional flow diverges from short setup (accumulation detected)."
             else:
-                return "Institutional flow is neutral — no directional conviction from smart money."
+                return "Institutional flow is neutral — no directional conviction from institutional participants."
         return "No institutional alignment assessment available."
 
 

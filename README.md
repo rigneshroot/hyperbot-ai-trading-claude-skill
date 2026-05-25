@@ -1,5 +1,10 @@
 # Hyperbot - Explainable Trading Intelligence Framework
 
+[![Tests](https://img.shields.io/badge/tests-25%20passed-success)](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-AI%20Research%20%2F%20Educational-yellow.svg)](LICENSE)
+[![Claude Skill](https://img.shields.io/badge/Claude-Skill%20Ready-7C3AED.svg)](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill)
+
 <p align="center">
   <img src="docs/images/hero_banner.png" alt="Hyperbot - Explainable Trading Intelligence" width="100%"/>
 </p>
@@ -10,7 +15,29 @@
 
 ---
 
+## ⚡ Run in 60 Seconds
+
+You can run a complete multi-layer analysis on any asset straight from your terminal.
+
+```bash
+git clone https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill.git
+cd hyperbot-ai-trading-claude-skill
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Run the analysis for BTC
+python main.py --symbol BTC --interval 4h --risk-profile moderate
+```
+
+<p align="center">
+  <img src="docs/images/rationale_output.png" alt="Terminal Output Example" width="650"/>
+</p>
+
+---
+
 ## Why This Exists
+
+📄 **Read the short research doc:** [Explainable AI for Multi-Layer Trading Rationale Generation](docs/research_paper.md)
 
 This project explores a specific question: **what happens when you build a trading analysis system that prioritizes explainability over prediction?**
 
@@ -57,7 +84,7 @@ Here's what that output contains:
 |---|---|
 | **Trend Direction** | Is price above or below the 200-period moving average? Are the fast and slow EMAs aligned? |
 | **Volatility Regime** | Is the market coiled tight (squeeze) or expanding? Where does current volatility sit relative to recent history? |
-| **Key Structural Level** | Is there a Fair Value Gap, a dynamic support/resistance zone, or a fresh imbalance nearby? |
+| **Key Structural Level** | Is there a Liquidity Imbalance, a dynamic support/resistance zone, or a fresh inefficiency nearby? |
 | **Momentum State** | Is MACD crossing? Is the histogram accelerating or stalling? |
 | **Risk/Reward** | Exact stop-loss and take-profit levels based on ATR, with a calculated ratio. |
 | **Position Sizing** | How much of your account this trade would risk, derived from the stop distance and your risk tolerance. |
@@ -81,7 +108,7 @@ Instead of relying on one indicator and hoping for the best, Hyperbot runs five 
 
 **3. Bollinger Band Squeeze** -- Detects low-volatility compression. Markets coil before they move. This layer identifies when volatility is historically tight and watches for the expansion that follows.
 
-**4. Fair Value Gap (SMC)** -- Uses Smart Money Concepts to find price imbalances -- gaps in the market structure where institutions left footprints. Validates fills with strict close-based confirmation, not wick noise.
+**4. Liquidity Imbalance (Market Structure)** -- Analyzes structural price inefficiencies to find liquidity gaps in the market where institutional participants left footprints. Validates fills with strict close-based confirmation, not wick noise.
 
 **5. MACD Momentum** -- Catches the short-term waves. Tracks MACD crossovers and histogram acceleration to confirm that momentum is actually behind the move, not just price noise.
 
@@ -192,7 +219,7 @@ hyperbot-ai-trading-claude-skill/
       ema_trend.py           # Layer 1: EMA Trend Pullback
       rsi_meanrev.py         # Layer 2: RSI Mean Reversion
       bb_squeeze.py          # Layer 3: Bollinger Band Squeeze
-      fvg.py                 # Layer 4: Fair Value Gap (SMC)
+      fvg.py                 # Layer 4: Liquidity Imbalance (Market Structure)
       macd_momentum.py       # Layer 5: MACD Momentum
     aggregator.py            # Consensus voting engine
     rationale_engine.py      # Trade Rationale Engine (explainability core)

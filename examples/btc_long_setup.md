@@ -96,7 +96,7 @@ Live Feed:           Stub mode -- see institutional-finance-skills
 --------------------------------------------------
 
 Institutional Alignment: Institutional flow is neutral -- no directional
-conviction from smart money.
+conviction from institutional participants.
 ```
 
 ---

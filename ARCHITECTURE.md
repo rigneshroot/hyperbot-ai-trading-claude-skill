@@ -18,7 +18,7 @@ graph TD
         D -->|Query| S1[EMA Trend Pullback]
         D -->|Query| S2[RSI Mean Reversion]
         D -->|Query| S3[Bollinger Band Squeeze]
-        D -->|Query| S4["Fair Value Gap (SMC)"]
+        D -->|Query| S4["Liquidity Imbalance (Market Structure)"]
         D -->|Query| S5[MACD Momentum]
     end
 
