@@ -1,12 +1,16 @@
 # Hyperbot - Explainable Trading Intelligence Framework
 
-[![Tests](https://img.shields.io/badge/tests-25%20passed-success)](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill)
+[![Tests](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill/actions/workflows/tests.yml/badge.svg)](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-AI%20Research%20%2F%20Educational-yellow.svg)](LICENSE)
 [![Claude Skill](https://img.shields.io/badge/Claude-Skill%20Ready-7C3AED.svg)](https://github.com/rigneshroot/hyperbot-ai-trading-claude-skill)
 
 <p align="center">
   <img src="docs/images/hero_banner.png" alt="Hyperbot - Explainable Trading Intelligence" width="100%"/>
+</p>
+
+<p align="center">
+  <img src="docs/images/rationale_output.png" alt="Terminal Output Example" width="650"/>
 </p>
 
 <p align="center">
@@ -29,15 +33,11 @@ pip install -r requirements.txt
 python main.py --symbol BTC --interval 4h --risk-profile moderate
 ```
 
-<p align="center">
-  <img src="docs/images/rationale_output.png" alt="Terminal Output Example" width="650"/>
-</p>
-
 ---
 
 ## Why This Exists
 
-📄 **Read the short research doc:** [Explainable AI for Multi-Layer Trading Rationale Generation](docs/research_paper.md)
+📄 **Read the short research doc:** [Explainable AI for Multi-Layer Trading Rationale Generation](research/EXPLAINABLE_TRADING_AI.md)
 
 This project explores a specific question: **what happens when you build a trading analysis system that prioritizes explainability over prediction?**
 
@@ -81,7 +81,7 @@ When you ask Hyperbot to analyze a market, it produces a **Trade Rationale** -- 
 Here's what that output contains:
 
 | Layer | What It Tells You |
-|---|---|
+| --- | --- |
 | **Trend Direction** | Is price above or below the 200-period moving average? Are the fast and slow EMAs aligned? |
 | **Volatility Regime** | Is the market coiled tight (squeeze) or expanding? Where does current volatility sit relative to recent history? |
 | **Key Structural Level** | Is there a Liquidity Imbalance, a dynamic support/resistance zone, or a fresh inefficiency nearby? |
@@ -123,7 +123,7 @@ Generating a setup is only half the job. The other half is asking: **should you 
 Hyperbot includes a configurable risk profile system with three presets:
 
 | Profile | Max Position | Max Daily Loss | Min R/R | Best For |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **Conservative** | 5% | -2% | 1:2.5 | Paper trading and research |
 | **Moderate** | 15% | -4% | 1:2.0 | Default analysis mode |
 | **Aggressive** | 25% | -6% | 1:1.5 | Only after extensive validation |
@@ -161,7 +161,7 @@ The bot only proceeds when both `approve: true` and `confidence: high` are retur
 The `examples/` directory contains complete, representative outputs showing what the framework actually produces. These aren't sanitized demos -- they show the full pipeline output including cases where the system says "do nothing" and cases where the risk layer rejects a technically valid setup.
 
 | Example | Outcome | What It Demonstrates |
-|---|---|---|
+| --- | --- | --- |
 | [BTC Long Setup](examples/btc_long_setup.md) | Approved | Clean 4/5 agreement, full rationale with FVG structural anchor |
 | [ETH No Setup](examples/eth_no_setup.md) | Stand Aside | 0/5 agreement, framework correctly identifying ambiguous market |
 | [SOL Short -- Risk Rejected](examples/sol_short_risk_rejected.md) | Flagged | Technically valid 4/5 short rejected by conservative risk profile |
@@ -179,7 +179,7 @@ This repository is part of a larger ecosystem of finance-AI research tools. Each
 </p>
 
 | Repository | Role |
-|---|---|
+| --- | --- |
 | **institutional-finance-skills** | Macro-level institutional positioning, 13F analysis, sector flow intelligence |
 | **ai-risk-copilot** | Portfolio risk assessment, drawdown analysis, risk tolerance profiling |
 | **hyperbot (this repo)** | Technical market analysis, trade rationale generation, explainable setups |
