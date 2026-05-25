@@ -1,108 +1,158 @@
-# Hyperbot: Technical System Architecture Document
+# System Architecture
 
-This document outlines the software design, code flow, execution cycles, risk management controls, and LLM meta-filtering architecture for the **Hyperbot AI Trading Bot** built on the Hyperliquid exchange.
+This document covers the internal design, data flow, risk controls, and how the analysis layers compose into a single coherent output.
 
 ---
 
-## 1. System Topology & Component Layout
+## System Topology
 
-Hyperbot is designed to be highly modular, separating data collection, mathematical strategy analysis, consensus aggregation, risk check gates, AI-driven auditing, and order execution.
+The framework has three stages: **observe** (gather data and run analysis), **reason** (structure a rationale and assess risk), and **gate** (apply LLM audit before any action).
 
 ```mermaid
 graph TD
-    A[Exchange API / Hyperliquid] -->|Fetch OHLCV Candles| B[ExchangeClient]
-    B -->|Return Pandas DataFrame| C[Active Loop / main.py]
+    A["Exchange API (Hyperliquid)"] -->|Fetch OHLCV Candles| B[ExchangeClient]
+    B -->|Pandas DataFrame| C["Orchestrator (main.py / analyze.py)"]
     C -->|Feed Data| D[SignalAggregator]
-    
-    subgraph Strategies Suite
+
+    subgraph Analysis Layers
         D -->|Query| S1[EMA Trend Pullback]
         D -->|Query| S2[RSI Mean Reversion]
         D -->|Query| S3[Bollinger Band Squeeze]
-        D -->|Query| S4[Fair Value Gap SMC]
+        D -->|Query| S4["Fair Value Gap (SMC)"]
         D -->|Query| S5[MACD Momentum]
     end
-    
-    S1 & S2 & S3 & S4 & S5 -->|Return StrategySignal| D
-    D -->|Calculate Consolidated Recommendation| C
-    
-    C -->|Check Risk Gates| R[Risk Controls]
-    R -->|Pass Risk Checks| F[LlmMetaFilter / Claude API]
-    F -->|Approve Signal| E[ExchangeClient]
-    E -->|Execute Order on Testnet| A
+
+    S1 & S2 & S3 & S4 & S5 -->|StrategySignal| D
+    D -->|Consensus + Signals| RE[Trade Rationale Engine]
+
+    RE -->|Structured Rationale| RC[Risk Context Layer]
+    RC -->|Risk Assessment| IC[Institutional Context]
+    IC -->|Enriched Analysis| C
+
+    C -->|Check Risk Gates| R[Safety Controls]
+    R -->|Pass| F["LLM Meta-Filter (Claude)"]
+    F -->|Approve / Reject| E[ExchangeClient]
+    E -->|Execute on Testnet| A
 ```
 
 ---
 
-## 2. Code Directory Overview
+## Ecosystem Integration
 
-*   `backtest.py`: Walk-forward backtester simulating historical data bar-by-bar to ensure no lookahead bias.
-*   `pnl_calc.py`: Risk-adjusted compounding equity calculator analyzing drawdowns and returns for sizing models.
-*   `show_signals.py`: Generates the Per-Trade Confidence score matrix for backtest logs.
-*   `analyze.py`: Read-only utility displaying real-time strategies evaluation in a clean terminal ASCII table.
-*   `main.py`: Active execution scheduler enforcing safety gates, notifications, and LLM filtering.
-*   `config.yaml`: Central registry containing all active asset definitions, timeframe intervals, and strategy parameters.
-*   `hyperbot/`
-    *   `__init__.py`: Package structure.
-    *   `exchange_client.py`: Interfacing client wrapping Hyperliquid Info and Exchange APIs (defaults strictly to Testnet).
-    *   `llm_filter.py`: Handles Claude 3.5 Sonnet meta-filtering trade reviews.
-    *   `aggregator.py`: Handles voting tally math and consensus requirements.
-    *   `strategies/`
-        *   `base.py`: Defines `StrategySignal` data model and indicator math (EMA, ATR, RSI, Bollinger Bands).
-        *   `ema_trend.py`: Bullish/Bearish trend pullbacks.
-        *   `rsi_meanrev.py`: Extreme counter-trends near EMA50.
-        *   `bb_squeeze.py`: Volatility band squeezes and breakouts.
-        *   `fvg.py`: SMC imbalances with close-based fill validation.
-        *   `macd_momentum.py`: MACD crossovers with histogram acceleration.
-*   `tests/`
-    *   `test_strategies.py`: Automated Python `unittest` strategy validation suite.
+This repository is designed to work as part of a three-repo research platform. Each repo handles a different analysis layer:
+
+```mermaid
+graph LR
+    IFS["institutional-finance-skills<br/>(Macro / Institutional Flow)"] -->|Sector context| HB["hyperbot<br/>(Technical Analysis + Rationale)"]
+    ARC["ai-risk-copilot<br/>(Risk Profiling)"] -->|Risk tolerance profile| HB
+    HB -->|Structured rationale| IFS
+    HB -->|Position sizing data| ARC
+```
+
+The integration points are:
+- **institutional_context.py** accepts sector flow data from `institutional-finance-skills`
+- **risk_context.py** uses the same risk profile schema as `ai-risk-copilot`
+
+When running standalone (no live feeds from the other repos), both modules operate in stub mode with structured placeholder data and clearly documented extension points.
 
 ---
 
-## 3. Consensus Aggregation Algorithm
+## Module Responsibilities
 
-The signal aggregator acts as the voting system. Instead of relying on a single indicator, it scores the market on a **0 to 100** scale across all 5 strategies. 
-
-Let $S_i$ be the set of strategies where $i \in \{1, 2, 3, 4, 5\}$. Let $C_{buy}(S_i)$ and $C_{sell}(S_i)$ represent the buy and sell confidence scores of strategy $S_i$. Let $T_{agree}$ be the minimum confidence score required to "agree" (defined as `agree_threshold` in `config.yaml`, e.g., 50%).
-
-1.  **Count Agreeing Strategies:**
-    $$N_{buy} = \sum_{i=1}^{5} \mathbb{I}\left(C_{buy}(S_i) \ge T_{agree}\right)$$
-    $$N_{sell} = \sum_{i=1}^{5} \mathbb{I}\left(C_{sell}(S_i) \ge T_{agree}\right)$$
-2.  **Calculate Average Confidence Scores:**
-    $$\mu_{buy} = \frac{1}{5} \sum_{i=1}^{5} C_{buy}(S_i)$$
-    $$\mu_{sell} = \frac{1}{5} \sum_{i=1}^{5} C_{sell}(S_i)$$
-3.  **Aggregation Recommendation Decision Rules:**
-    *   **LONG Recommendation:**
-        $$N_{buy} \ge N_{min} \quad \land \quad \mu_{buy} \ge 0.8 \cdot T_{agree} \quad \land \quad \mu_{buy} > \mu_{sell} + 15$$
-    *   **SHORT Recommendation:**
-        $$N_{sell} \ge N_{min} \quad \land \quad \mu_{sell} \ge 0.8 \cdot T_{agree} \quad \land \quad \mu_{sell} > \mu_{buy} + 15$$
-    *   **STAND ASIDE:**
-        If neither condition is met, the system stands aside (`stand_aside`).
+| Module | File | Purpose |
+|---|---|---|
+| Strategy Layer | `hyperbot/strategies/*.py` | Independent technical analysis engines, each returning a 0-100 confidence score |
+| Aggregator | `hyperbot/aggregator.py` | Consensus voting: counts agreements, computes averages, applies decision rules |
+| Rationale Engine | `hyperbot/rationale_engine.py` | Composes all strategy outputs into a structured, explainable trade breakdown |
+| Risk Context | `hyperbot/risk_context.py` | Applies configurable risk profiles to proposed positions |
+| Institutional Context | `hyperbot/institutional_context.py` | Overlays macro-level institutional positioning data |
+| Exchange Client | `hyperbot/exchange_client.py` | Hyperliquid API wrapper (testnet by default) |
+| LLM Filter | `hyperbot/llm_filter.py` | Claude-based trade audit with unilateral veto |
+| Backtester | `backtest.py` | Walk-forward historical simulation with no lookahead bias |
+| PnL Calculator | `pnl_calc.py` | Compounding equity models and drawdown analysis |
+| Analyzer | `analyze.py` | Live read-only analysis with full rationale output |
+| Orchestrator | `main.py` | Active execution loop with all safety gates |
 
 ---
 
-## 4. Safety Risk Control Gates
+## Consensus Aggregation Algorithm
 
-To survive market variance and prevent devastating drawdowns, the `main.py` orchestrator applies five distinct risk check gates at every tick:
+The aggregator scores the market on a 0-100 scale across all 5 analysis layers and applies three decision rules:
 
-1.  ** circuit breaker Check:** Enforces a maximum daily loss cap (`max_daily_loss_pct` e.g., -5%). If the bot's PnL drops below this threshold today, trading locks until midnight UTC.
-2.  **Volatility Filter:** Calculates relative volatility ($ATR_{14} / Price$). If volatility falls below the threshold (`min_atr_percent` e.g., 0.05%), it blocks entries, avoiding chopping fees in stagnant sideways markets.
-3.  **Sizing Guard:** Sizing is hard-capped at a maximum fraction of the active balance (`max_position_sizing_pct` e.g., 20%) to avoid catastrophic losses on a single trade.
-4.  **No Concurrency Gate:** The bot restricts execution to a maximum of **1 open position at a time**.
-5.  **Global Halt Toggle:** Interrogates environment variables. If `HALT=1` is loaded in `.env`, the bot will completely skip order execution.
+**1. Count agreeing strategies:**
+
+For each direction, count how many strategies have a confidence score at or above the agreement threshold (default 50%):
+
+```
+N_buy  = count of strategies where buy_confidence >= threshold
+N_sell = count of strategies where sell_confidence >= threshold
+```
+
+**2. Calculate average confidence:**
+
+```
+avg_buy  = mean of all 5 buy confidence scores
+avg_sell = mean of all 5 sell confidence scores
+```
+
+**3. Decision rules:**
+
+- **LONG**: `N_buy >= min_agree` AND `avg_buy >= 0.8 * threshold` AND `avg_buy > avg_sell + 15`
+- **SHORT**: `N_sell >= min_agree` AND `avg_sell >= 0.8 * threshold` AND `avg_sell > avg_buy + 15`
+- **STAND ASIDE**: Neither condition met
+
+The 15-point differential requirement prevents trades where both directions show similar conviction. If the market is ambiguous, the system says so.
 
 ---
 
-## 5. Claude LLM Meta-Filter Architecture
+## Safety Controls
 
-Rule-based strategies are deterministic and mathematically auditable, but cannot assess complex contextual alignment. Hyperbot uses Claude 3.5 Sonnet as a selective filter.
+The orchestrator (`main.py`) applies five risk gates at every execution tick:
 
-*   **Audit-Only Constraint:** The LLM cannot initiate trades. It can only audit mechanically triggered entries. It holds a **unilateral veto (REJECT)**.
-*   **JSON Verdict Contract:** Claude is prompted with a strict system role requiring a formatted JSON object return:
-    ```json
-    {
-      "approve": true,
-      "confidence": "high",
-      "reason": "Clear high timeframe EMA alignment supported by a fresh bullish FVG and accelerating MACD momentum. No Bollinger Band expansion conflicts detected."
-    }
-    ```
-*   **Execution Rule:** Hyperbot only proceeds to submit order requests if `"approve": true` AND `"confidence": "high"` are returned. If the LLM returned `"confidence": "medium"` or `"low"`, the signal is rejected.
+1. **Circuit Breaker** -- Maximum daily loss cap. If the session PnL drops below the configured threshold, trading locks until midnight UTC.
+2. **Volatility Filter** -- Calculates ATR-relative volatility. Below-threshold volatility blocks entries to avoid choppy, fee-grinding markets.
+3. **Sizing Guard** -- Hard cap on maximum position size as a fraction of active balance.
+4. **No Concurrency** -- Maximum of one open position at a time.
+5. **Global Halt** -- If `HALT=1` is set in the environment, execution is completely disabled.
+
+---
+
+## LLM Meta-Filter Design
+
+The Claude integration follows a strict audit-only contract:
+
+- The LLM **cannot create signals**. It can only review mechanically triggered entries.
+- It returns a structured JSON verdict: `{approve, confidence, reason}`
+- Execution only proceeds when `approve: true` AND `confidence: high`
+- Any other response is a rejection. There is no override mechanism.
+
+This design ensures the LLM acts as a filter, not a signal source. The mechanical system proposes; Claude disposes.
+
+---
+
+## Trade Rationale Engine Design
+
+The `TradeRationaleEngine` class consumes all strategy signals and the aggregator's consensus, then structures them into a `TradeRationale` dataclass containing:
+
+- Market state: trend direction, volatility regime, momentum state
+- Key structural levels (FVG zones, dynamic EMA support/resistance)
+- Entry, stop-loss, and take-profit levels (ATR-based)
+- Position sizing via fixed fractional risk model
+- Explicit invalidity conditions for setup invalidation
+- Per-strategy breakdown showing individual agreements
+- Summary narrative in plain language
+
+The rationale is the primary output of the framework. It makes every assumption visible and every exit condition concrete.
+
+---
+
+## Risk Context Layer Design
+
+The `RiskContextLayer` applies one of three configurable profiles (conservative, moderate, aggressive) to any proposed trade. It evaluates four constraints:
+
+1. Position size cap per profile
+2. Daily drawdown buffer remaining
+3. Minimum risk/reward ratio
+4. Minimum strategy agreement count (hard floor of 3/5 regardless of profile)
+
+The output is a `RiskAssessment` with an adjusted position size, list of warnings, and a plain-language rationale explaining the decision.

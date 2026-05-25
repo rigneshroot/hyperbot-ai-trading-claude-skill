@@ -1,139 +1,233 @@
-# Hyperbot: Your Modular AI Trading Bot, Portable Skill, and first-class AI Plugin
+# Hyperbot - Explainable Trading Intelligence Framework
 
-Welcome to Hyperbot. 
+<p align="center">
+  <img src="docs/images/hero_banner.png" alt="Hyperbot - Explainable Trading Intelligence" width="100%"/>
+</p>
 
-This is a personal, modular quantitative trading bot designed for the Hyperliquid exchange (Testnet safe-by-default), authored by **Rignesh P**. 
-
-This codebase was built to be 100% portable. It can be used in three distinct ways:
-1.  **As a standard Python project:** Run backtests, sizing models, and execution loops locally in your terminal.
-2.  **As a portable AI Skill:** Load the repository directly into any AI Coding Assistant (like Claude Code) and use natural language to command it (e.g., "Run a 30-day backtest on BTC").
-3.  **As a standardized first-class AI Plugin:** Fully structured to be loaded directly into any AI platform supporting custom plugin registries.
-
----
-
-## What makes this bot special?
-
-Instead of relying on a single indicators setting, Hyperbot aggregates predictions across 5 self-contained trading strategies:
-
-1.  **EMA Trend Pullback:** Follows the macro trend (EMA200) and waits for price to pull back to the fast EMA20 before entering.
-2.  **RSI Mean Reversion:** Acts as a counter-trend engine, spotting extreme oversold/overbought conditions near the EMA50.
-3.  **Bollinger Band Squeeze:** Capitalizes on low-volatility coiling consolidation, triggering when volume expands and breakouts occur.
-4.  **Fair Value Gap (SMC):** Uses advanced Smart Money Concepts to spot price imbalances with strict closing-price fill gates.
-5.  **MACD Momentum:** Rides short-term trend waves using MACD crossovers and histogram accelerations.
-
-### The Double-Lock Security Design:
-*   **The Consensus Aggregator:** Trades are only submitted if a majority of strategies (e.g., 4 out of 5) agree, and the average score in the winning direction is dominant.
-*   **The Claude LLM Meta-Filter:** When a mechanical setup triggers, the bot sends the entire technical context to Claude 3.5 Sonnet to perform a quick risk audit. Claude acts as a gatekeeper—it has a unilateral veto to reject trades if it spots conflicting market conditions.
+<p align="center">
+  <strong>This is not a trading bot. This is a framework that explains why a trade makes sense -- or why it doesn't.</strong>
+</p>
 
 ---
 
-## How to use this project as a first-class AI Plugin
+## The Problem with Trading Bots
 
-This repository includes a standardized `plugin.json` in the root and a custom skill manual under `skills/ai-trading-skill/SKILL.md`. This allows any platform supporting AI plugins to load it as a native, first-class capability extension.
+Most trading bots give you a signal: **buy** or **sell**. Then you're supposed to trust it.
 
-### Plugin Anatomy:
-*   `plugin.json`: Standard metadata configuration defining the plugin schema, naming, version, and the loadable `ai-trading-skill`.
-*   `skills/ai-trading-skill/SKILL.md`: The official instructions manual that tells the host platform's agents exactly how to invoke your bot's scripts.
+No context. No reasoning. No explanation of what happens if the setup fails. Just a direction and a prayer.
 
-To load this as a plugin in your host system, point your AI registry loader to this directory. The registry will register the `ai-trading-skill` and equip its subagents with the capability to run quantitative analysis, backtesting, and automated trades on your behalf.
+That's not intelligence. That's a coin flip with extra steps.
+
+**Hyperbot takes a different approach.** It doesn't just tell you what to do -- it shows you what the market looks like from five different analytical perspectives, explains why they agree or disagree, defines exactly what would invalidate the setup, and tells you how much risk you're actually taking.
+
+If the answer is "don't trade," it says that too. Clearly. With reasons.
 
 ---
 
-## How to use this project as a portable AI Skill
+## What Actually Happens When You Run It
 
-If you are using a standard AI workspace assistant without a formal plugin registry, you can still command the bot using simple, everyday natural language prompts:
+When you ask Hyperbot to analyze a market, it produces a **Trade Rationale** -- a structured, multi-layer breakdown that reads like a research note, not a signal alert.
 
-*   **For Live Analysis:** 
-    > "Check the live market right now for BTC and show me the strategy scores table."
-    *(The AI will run `python3 analyze.py` and format the ASCII table directly in your chat).*
-*   **For Simulations:** 
-    > "Run a 60-day historical backtest on SOL and tell me which compounding position sizing model performed best."
-    *(The AI will run the backtester, calculate returns using `pnl_calc.py`, and analyze the outputs for you).*
-*   **For Development:** 
-    > "Can you update the RSI strategy config to make the oversold threshold 25 instead of 30, and then re-run the unit tests to make sure everything passes?"
-    *(The AI will modify `config.yaml`, run `python3 -m unittest tests/test_strategies.py`, and report back).*
-*   **For Loops:** 
-    > "Let's do a single execution dry-tick to make sure our exchange connections and LLM filters are working perfectly."
-    *(The AI will run `python3 main.py` in one-shot mode and verify your setup).*
+<p align="center">
+  <img src="docs/images/rationale_output.png" alt="Trade Rationale Engine Output" width="600"/>
+</p>
+
+Here's what that output contains:
+
+| Layer | What It Tells You |
+|---|---|
+| **Trend Direction** | Is price above or below the 200-period moving average? Are the fast and slow EMAs aligned? |
+| **Volatility Regime** | Is the market coiled tight (squeeze) or expanding? Where does current volatility sit relative to recent history? |
+| **Key Structural Level** | Is there a Fair Value Gap, a dynamic support/resistance zone, or a fresh imbalance nearby? |
+| **Momentum State** | Is MACD crossing? Is the histogram accelerating or stalling? |
+| **Risk/Reward** | Exact stop-loss and take-profit levels based on ATR, with a calculated ratio. |
+| **Position Sizing** | How much of your account this trade would risk, derived from the stop distance and your risk tolerance. |
+| **Invalidity Conditions** | The specific things that would break the setup. Not vague warnings -- concrete price levels and indicator states. |
+
+The point is not prediction. The point is **structured thinking about markets**, where every assumption is visible and every exit condition is defined in advance.
+
+---
+
+## The Five Analysis Layers
+
+<p align="center">
+  <img src="docs/images/analysis_layers.png" alt="Five analysis layers converging into a trade rationale" width="500"/>
+</p>
+
+Instead of relying on one indicator and hoping for the best, Hyperbot runs five independent analysis engines simultaneously. Each one looks at the market from a different angle:
+
+**1. EMA Trend Pullback** -- Follows the macro trend using the 200-period moving average. Waits for price to pull back to the fast 20-period EMA before signaling. It's patient. It doesn't chase.
+
+**2. RSI Mean Reversion** -- The contrarian. Watches for extreme oversold or overbought conditions near key moving averages. When everyone else is panicking, this one is paying attention.
+
+**3. Bollinger Band Squeeze** -- Detects low-volatility compression. Markets coil before they move. This layer identifies when volatility is historically tight and watches for the expansion that follows.
+
+**4. Fair Value Gap (SMC)** -- Uses Smart Money Concepts to find price imbalances -- gaps in the market structure where institutions left footprints. Validates fills with strict close-based confirmation, not wick noise.
+
+**5. MACD Momentum** -- Catches the short-term waves. Tracks MACD crossovers and histogram acceleration to confirm that momentum is actually behind the move, not just price noise.
+
+A trade setup only becomes actionable when **the majority of these layers agree** and the confidence score in the winning direction meaningfully exceeds the opposing side. The framework calls this the **Consensus Aggregator**, and it exists specifically to prevent low-conviction entries.
+
+---
+
+## The Risk-Awareness Layer
+
+Generating a setup is only half the job. The other half is asking: **should you actually take this trade given your current risk state?**
+
+Hyperbot includes a configurable risk profile system with three presets:
+
+| Profile | Max Position | Max Daily Loss | Min R/R | Best For |
+|---|---|---|---|---|
+| **Conservative** | 5% | -2% | 1:2.5 | Paper trading and research |
+| **Moderate** | 15% | -4% | 1:2.0 | Default analysis mode |
+| **Aggressive** | 25% | -6% | 1:1.5 | Only after extensive validation |
+
+The risk layer evaluates every proposed setup against these constraints. If you've already hit your daily loss limit, it blocks new entries. If the risk/reward ratio doesn't meet the minimum threshold, it flags the setup. If fewer than 3 out of 5 strategies agree, it rejects regardless of profile.
+
+This isn't a suggestion system. It's a guardrail.
+
+---
+
+## The Claude LLM Meta-Filter
+
+When a mechanical setup triggers -- meaning the numbers say "go" -- there's one more gate before anything happens.
+
+The entire technical context (every strategy's score, the regime classification, the proposed entry/stop/target) gets sent to Claude for a structured risk audit. Claude doesn't generate signals. It can only do one thing: **veto**.
+
+If it spots conflicting regimes, stale levels, or structural inconsistencies that the mechanical system missed, it rejects the trade. This is a unilateral block -- there's no override.
+
+The output is a structured JSON verdict with an explicit reason:
+
+```json
+{
+  "approve": true,
+  "confidence": "high",
+  "reason": "Clear high timeframe EMA alignment supported by a fresh bullish FVG and accelerating MACD momentum. No Bollinger Band expansion conflicts detected."
+}
+```
+
+The bot only proceeds when both `approve: true` and `confidence: high` are returned. Anything less is a rejection.
+
+---
+
+## Where This Fits
+
+This repository is part of a larger ecosystem of finance-AI research tools. Each repo handles a different layer of the analysis stack:
+
+<p align="center">
+  <img src="docs/images/ecosystem_diagram.png" alt="Ecosystem Architecture" width="550"/>
+</p>
+
+| Repository | Role |
+|---|---|
+| **institutional-finance-skills** | Macro-level institutional positioning, 13F analysis, sector flow intelligence |
+| **ai-risk-copilot** | Portfolio risk assessment, drawdown analysis, risk tolerance profiling |
+| **hyperbot (this repo)** | Technical market analysis, trade rationale generation, explainable setups |
+
+The Institutional Context module in this repo is designed as a bridge -- it can accept sector flow signals from `institutional-finance-skills` and overlay them on technical setups. The Risk Context module mirrors the schema used by `ai-risk-copilot`, so both systems can share a consistent risk language.
+
+These aren't just three repos on a GitHub profile. They're designed to compose into a coherent research platform for understanding how markets work across multiple layers.
+
+---
+
+## Using This as an AI Skill
+
+This repository is structured to work as a native skill for AI coding assistants. When loaded into Claude Code, Gemini, or any assistant that supports skill definitions, it teaches the AI how to:
+
+- Run live market analysis: `python3 analyze.py --symbol BTC --risk-profile conservative`
+- Execute historical backtests: `python3 backtest.py --days 60`
+- Evaluate position sizing models: `python3 pnl_calc.py`
+- Run the full orchestrator loop: `python3 main.py`
+
+The skill definition lives at `skills/ai-trading-skill/SKILL.md` and `SKILL.md` (root). No extra configuration needed -- just load the repo and start asking questions in natural language.
+
+### As a Claude Code Skill
+When you run `claude` inside this repo, it automatically reads the skill instructions from `.claude/skills/ai-trading-skill/SKILL.md`.
+
+### As an AI Plugin
+The `plugin.json` in the root defines this as a loadable plugin for any platform supporting custom plugin registries.
 
 ---
 
 ## Repository Map
 
-Here is how the project files are laid out:
-
 ```
-hyperbot/
- ├── strategies/
- │    ├── base.py          # Indicators calculations and StrategySignal structure
- │    ├── ema_trend.py     # Strategy 1: EMA Pullback
- │    ├── rsi_meanrev.py   # Strategy 2: RSI Mean Reversion
- │    ├── bb_squeeze.py    # Strategy 3: Bollinger Squeeze
- │    ├── fvg.py           # Strategy 4: Fair Value Gap (SMC)
- │    └── macd_momentum.py # Strategy 5: MACD Crossovers
- ├── aggregator.py         # The voting consensus logic
- ├── exchange_client.py    # Interacts with Hyperliquid (testnet safe-by-default)
- └── llm_filter.py         # Interfaces signal audits with Claude
- ├── tests/
- │    └── test_strategies.py # Automated testing suite
- ├── skills/
- │    └── ai-trading-skill/
- │         └── SKILL.md    # The loadable AI plugin skill instructions manual
- ├── backtest.py           # Walks historical data to simulate trades
- ├── pnl_calc.py           # Compounding equity models calculator
- ├── show_signals.py       # Displays the trade signals matrix
- ├── analyze.py            # Live read-only console visualizer
- ├── main.py               # Main bot execution scheduler daemon
- ├── config.yaml           # Central parameter file for all strategies
- ├── .env.example          # Template for credential keys
- ├── plugin.json           # Standard AI plugin definition schema metadata
- ├── ARCHITECTURE.md       # In-depth system flowcharts and quant math details
- ├── SKILL.md              # Portable AI Agent instruction manual (root fallback)
- └── requirements.txt      # Python dependencies
+hyperbot-ai-trading-claude-skill/
+  hyperbot/
+    strategies/
+      base.py                # Indicator math and StrategySignal data model
+      ema_trend.py           # Layer 1: EMA Trend Pullback
+      rsi_meanrev.py         # Layer 2: RSI Mean Reversion
+      bb_squeeze.py          # Layer 3: Bollinger Band Squeeze
+      fvg.py                 # Layer 4: Fair Value Gap (SMC)
+      macd_momentum.py       # Layer 5: MACD Momentum
+    aggregator.py            # Consensus voting engine
+    rationale_engine.py      # Trade Rationale Engine (explainability core)
+    risk_context.py          # Risk-awareness layer with profile presets
+    institutional_context.py # Institutional context bridge
+    exchange_client.py       # Hyperliquid API client (testnet default)
+    llm_filter.py            # Claude LLM meta-filter
+  tests/
+    test_strategies.py       # Automated test suite
+  skills/
+    ai-trading-skill/
+      SKILL.md               # AI agent instruction manual
+  docs/
+    images/                  # Documentation images
+  analyze.py                 # Live market analysis with rationale output
+  backtest.py                # Walk-forward historical backtester
+  pnl_calc.py                # Compounding equity models calculator
+  show_signals.py            # Trade signals matrix display
+  main.py                    # Execution orchestrator with safety gates
+  config.yaml                # All strategy parameters and settings
+  plugin.json                # AI plugin definition
+  ARCHITECTURE.md            # Technical system architecture
+  SKILL.md                   # Root-level AI skill definition
 ```
 
 ---
 
-## Quick Setup (For Humans)
+## Quick Setup
 
-### 1. Prepare python environment
-Make sure Python 3.11+ is installed. Run these commands in your terminal:
-
+### 1. Create your environment
 ```bash
-# Create a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-
-# Install all packages
 pip install -r requirements.txt
 ```
 
-### 2. Add your keys
-Copy the template to create a secure, local secrets file:
+### 2. Configure your keys
 ```bash
 cp .env.example .env
 ```
-Open `.env` in a text editor and fill in your Hyperliquid wallet signing key and Anthropic API key. *Note: `.env` is fully git-ignored and will never be pushed to your GitHub.*
+Open `.env` and add your Hyperliquid wallet signing key and Anthropic API key. This file is git-ignored and will never be pushed.
 
-### 3. Run a quick check
+### 3. Verify everything works
 ```bash
-# Run unit tests to make sure strategies math is 100% correct
-python -m unittest tests/test_strategies.py
+# Run the test suite
+python3 -m unittest tests/test_strategies.py
 
-# See what the strategies think of the market right now (Read-Only)
-python3 analyze.py
+# Analyze BTC with the conservative risk profile
+python3 analyze.py --risk-profile conservative
 
-# Run a quick one-shot dry-run of the orchestrator loop
-python3 main.py
+# Run a 30-day backtest
+python3 backtest.py --days 30
 ```
 
 ---
 
-## License & Author
-*   **Author:** Rignesh P
-*   **License:** This project is licensed under the custom [AI Learning and Research License](LICENSE). It is provided for general usage, primarily intended for AI learning, education, and quantitative research purposes.
+## License and Author
+
+**Author:** Rignesh P
+
+**License:** This project is licensed under the [AI Learning and Research License](LICENSE). It is provided for general usage, primarily intended for AI learning, education, and quantitative research purposes.
 
 ---
 
-## Disclaimer
-Financial trading involves substantial risk. This software is provided as an experimental educational tool. Always run on Testnet before committing capital, and never let autonomous systems trade unmonitored.
+## A Note on Risk
+
+Financial trading involves substantial risk. This framework is an educational and research tool designed to make trading analysis more transparent and explainable. It is not financial advice.
+
+Always run on Testnet before committing capital. Always define your invalidation conditions before entering a trade. Always know exactly how much you're risking.
+
+The goal of this project is not to make trading easy. It's to make trading thinking visible.

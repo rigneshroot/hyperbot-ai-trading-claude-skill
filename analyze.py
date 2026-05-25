@@ -2,88 +2,113 @@ import argparse
 import yaml
 from hyperbot.exchange_client import HyperliquidClient
 from hyperbot.aggregator import SignalAggregator
+from hyperbot.rationale_engine import TradeRationaleEngine
+from hyperbot.risk_context import RiskContextLayer
+from hyperbot.institutional_context import InstitutionalContextProvider
+
 
 def run_analyzer():
-    parser = argparse.ArgumentParser(description="Live read-only Market Analyzer for hyperbot")
-    parser.add_argument("--symbol", type=str, default=None, help="Coin to analyze (e.g. BTC)")
+    parser = argparse.ArgumentParser(
+        description="Explainable Trading Intelligence — Live Market Analysis"
+    )
+    parser.add_argument("--symbol", type=str, default=None, help="Asset to analyse (e.g. BTC)")
     parser.add_argument("--interval", type=str, default=None, help="Candle interval (e.g. 15m)")
+    parser.add_argument(
+        "--risk-profile",
+        type=str,
+        default="moderate",
+        choices=["conservative", "moderate", "aggressive"],
+        help="Risk tolerance profile to apply",
+    )
+    parser.add_argument(
+        "--account-risk-pct",
+        type=float,
+        default=1.0,
+        help="Percentage of account to risk per trade (default 1.0)",
+    )
     args = parser.parse_args()
 
-    # Load configuration
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
-        
-    symbol = args.symbol or config.get('symbol', 'BTC')
-    interval = args.interval or config.get('interval', '15m')
-    
-    threshold = config.get('agree_threshold', 50)
-    min_agree = config.get('min_agree', 4)
 
-    print(f"=========================================================================================")
-    print(f"                      HYPERBOT LIVE MARKET REAL-TIME ANALYSIS                            ")
-    print(f"                      Asset: {symbol} | Interval: {interval}                             ")
-    print(f"=========================================================================================")
+    symbol   = args.symbol or config.get("symbol", "BTC")
+    interval = args.interval or config.get("interval", "15m")
+    threshold = config.get("agree_threshold", 50)
+    min_agree = config.get("min_agree", 4)
 
-    # Initialize exchange client
+    print("=" * 75)
+    print("  EXPLAINABLE TRADING INTELLIGENCE FRAMEWORK")
+    print(f"  Asset: {symbol}  |  Interval: {interval}  |  Risk Profile: {args.risk_profile.upper()}")
+    print("=" * 75)
+
+    # --- Fetch candles ---
     client = HyperliquidClient()
-    
-    # We fetch 250 candles to seed technical analysis warmup window (EMA200 requires 200+ candles)
     try:
         df = client.get_candles(symbol, interval, 250)
     except Exception as e:
         print(f"Error fetching candles: {str(e)}")
         return
 
-    # Initialize aggregator
+    # -------------------------------------------------------------------------
+    # 1. Strategy scoring matrix
+    # -------------------------------------------------------------------------
     aggregator = SignalAggregator(config)
-    
-    # Run strategies and consolidate recommendation
     recommendation, signals, metrics = aggregator.aggregate(df)
 
-    # Format and print strategies breakdown in an elegant table
-    header = f"{'Strategy Name':<22} | {'Buy %':<5} | {'Sell %':<6} | {'Regime':<13} | {'Reason Breakdown'}"
-    print(header)
-    print("-" * 110)
+    print(f"\n{'Strategy':<22} | {'Buy':>5} | {'Sell':>5} | {'Regime':<14} | Reason")
+    print("-" * 95)
 
     for name, sig in signals.items():
-        # Capitalize and format name
-        clean_name = name.replace("_", " ").title()
-        
-        # Add asterisk if score meets threshold
-        b_ast = "*" if sig.buy_confidence >= threshold else " "
-        s_ast = "*" if sig.sell_confidence >= threshold else " "
-        
-        b_str = f"{sig.buy_confidence}%{b_ast}"
-        s_str = f"{sig.sell_confidence}%{s_ast}"
-        
-        # Truncate reason if too long
-        reason = sig.reason
-        if len(reason) > 60:
-            reason = reason[:57] + "..."
+        clean = name.replace("_", " ").title()
+        b_str = f"{'*' if sig.buy_confidence >= threshold else ' '}{sig.buy_confidence}%"
+        s_str = f"{'*' if sig.sell_confidence >= threshold else ' '}{sig.sell_confidence}%"
+        reason = sig.reason if len(sig.reason) <= 55 else sig.reason[:52] + "..."
+        print(f"{clean:<22} | {b_str:>5} | {s_str:>5} | {sig.regime:<14} | {reason}")
 
-        print(f"{clean_name:<22} | {b_str:<5} | {s_str:<6} | {sig.regime:<13} | {reason}")
+    print("-" * 95)
+    print(f"Consensus: {recommendation.upper():<12}  "
+          f"Buy: {metrics['agree_buy']}/5   Sell: {metrics['agree_sell']}/5   "
+          f"Avg Buy: {metrics['avg_buy']:.1f}%   Avg Sell: {metrics['avg_sell']:.1f}%")
 
-    print("-" * 110)
-    
-    # Format recommendation output
-    rec_colors = {
-        'long': '\033[92mLONG\033[0m',       # Green
-        'short': '\033[91mSHORT\033[0m',     # Red
-        'stand_aside': '\033[93mSTAND ASIDE\033[0m' # Yellow
-    }
-    
-    # Fallback to plain text if color output is not desired, but let's make it look premium
-    rec_text = recommendation.upper()
-    
-    print(f"\nConsolidated Recommendation:  \033[1m{rec_text}\033[0m")
-    print(f"Agree Buy:                   {metrics['agree_buy']}/5 strategies")
-    print(f"Agree Sell:                  {metrics['agree_sell']}/5 strategies")
-    print(f"Average Buy Score:           {metrics['avg_buy']:.1f}%")
-    print(f"Average Sell Score:          {metrics['avg_sell']:.1f}%")
-    print(f"Minimum Agreement Required:  {min_agree}/5 (each >= {threshold}%)")
-    print(f"=========================================================================================")
-    print("NOTE: This script operates in READ-ONLY mode. No orders have been placed.")
-    print(f"=========================================================================================")
+    # -------------------------------------------------------------------------
+    # 2. Trade Rationale Engine
+    # -------------------------------------------------------------------------
+    engine = TradeRationaleEngine(config)
+    rationale = engine.analyse(df, symbol, interval, account_risk_pct=args.account_risk_pct)
+    print(rationale.display())
+
+    # -------------------------------------------------------------------------
+    # 3. Risk-Awareness Layer
+    # -------------------------------------------------------------------------
+    risk_layer = RiskContextLayer(profile_name=args.risk_profile, daily_pnl_pct=0.0)
+    risk_assessment = risk_layer.evaluate(
+        proposed_position_pct=rationale.position_sizing_pct,
+        risk_reward=rationale.risk_reward,
+        confidence_score=rationale.confidence_score,
+        strategies_agreed=rationale.strategies_agreed,
+    )
+    print(risk_assessment.display())
+
+    # -------------------------------------------------------------------------
+    # 4. Institutional Context
+    # -------------------------------------------------------------------------
+    inst_provider = InstitutionalContextProvider()
+    inst_context = inst_provider.get_context(symbol)
+    print(inst_context.display())
+
+    if recommendation in ("long", "short"):
+        alignment = inst_context.alignment_note(recommendation)
+        print(f"  Institutional Alignment: {alignment}")
+        print()
+
+    # -------------------------------------------------------------------------
+    # Footer
+    # -------------------------------------------------------------------------
+    print("=" * 75)
+    print("  READ-ONLY MODE — No orders placed.")
+    print("  This framework provides analysis and explainability, not predictions.")
+    print("=" * 75)
+
 
 if __name__ == "__main__":
     run_analyzer()

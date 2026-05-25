@@ -1,8 +1,8 @@
 {
-  "name": "ai-trading-claude-plugin",
-  "displayName": "AI Trading Claude Plugin",
-  "version": "1.0.0",
-  "description": "Quantitative trading, backtesting, live market analysis, and Claude-filtered automated execution on the Hyperliquid exchange.",
+  "name": "hyperbot-trading-intelligence",
+  "displayName": "Hyperbot - Explainable Trading Intelligence",
+  "version": "2.0.0",
+  "description": "Explainable trading intelligence framework with multi-layer analysis, structured trade rationale generation, risk-awareness profiling, and institutional context integration. Designed for research and AI-assisted market analysis.",
   "author": "Rignesh P",
   "skills": [
     "ai-trading-skill"
