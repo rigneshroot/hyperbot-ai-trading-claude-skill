@@ -1,0 +1,46 @@
+# General Bot Configuration
+symbol: BTC
+interval: 15m
+leverage: 10
+default_days: 30
+
+# Aggregator Configuration
+agree_threshold: 50  # Confidence threshold for a single strategy to "agree" (e.g. 50%)
+min_agree: 4        # Minimum number of strategies that must agree (out of 5)
+
+# Strategy specific parameters
+strategies:
+  ema_trend:
+    fast_period: 20
+    slow_period: 200
+    atr_period: 14
+    pullback_limit_atr: 0.5
+
+  rsi_meanrev:
+    rsi_period: 14
+    rsi_oversold: 30
+    rsi_overbought: 70
+    ema_period: 50
+    atr_period: 14
+    proximity_limit_atr: 1.5
+
+  bb_squeeze:
+    bb_period: 20
+    bb_std: 2.0
+    volatility_history: 50
+    volatility_percentile: 30
+    volume_sma_period: 20
+
+  fvg:
+    lookback: 50
+    fresh_bars: 15
+    proximity_atr: 0.25
+    min_gap_atr: 0.08
+    ema_period: 200
+
+  macd_momentum:
+    fast_period: 12
+    slow_period: 26
+    signal_period: 9
+    ema_period: 200
+    fresh_crossover_bars: 3

@@ -1,0 +1,15 @@
+# Python Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Project Specific
+backtest_results.json
+.idea/
+.vscode/
+.DS_Store

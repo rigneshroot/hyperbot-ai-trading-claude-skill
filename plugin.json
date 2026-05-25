@@ -1,0 +1,11 @@
+{
+  "name": "ai-trading-claude-plugin",
+  "displayName": "AI Trading Claude Plugin",
+  "version": "1.0.0",
+  "description": "Quantitative trading, backtesting, live market analysis, and Claude-filtered automated execution on the Hyperliquid exchange.",
+  "author": "Rignesh P",
+  "skills": [
+    "ai-trading-skill"
+  ],
+  "agents": []
+}
