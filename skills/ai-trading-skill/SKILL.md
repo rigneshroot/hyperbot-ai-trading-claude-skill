@@ -14,7 +14,7 @@ This skill equips any agent with the ability to run market analysis, generate ex
 Before running any script, activate the workspace environment:
 
 ```bash
-cd <workspace-root>
+cd <project-root>
 source .venv/bin/activate
 ```
 

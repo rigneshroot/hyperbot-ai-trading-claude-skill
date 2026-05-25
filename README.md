@@ -10,17 +10,36 @@
 
 ---
 
-## The Problem with Trading Bots
+## Why This Exists
 
-Most trading bots give you a signal: **buy** or **sell**. Then you're supposed to trust it.
+This project explores a specific question: **what happens when you build a trading analysis system that prioritizes explainability over prediction?**
 
-No context. No reasoning. No explanation of what happens if the setup fails. Just a direction and a prayer.
+Most trading systems optimize for one thing -- generating signals. Buy or sell. Green arrow or red arrow. The human is expected to trust the output without understanding what produced it, what assumptions it rests on, or what conditions would break it.
 
-That's not intelligence. That's a coin flip with extra steps.
+That's a poor interface between a human and a decision-support system. Especially in markets, where understanding *why* matters as much as understanding *what*.
 
-**Hyperbot takes a different approach.** It doesn't just tell you what to do -- it shows you what the market looks like from five different analytical perspectives, explains why they agree or disagree, defines exactly what would invalidate the setup, and tells you how much risk you're actually taking.
+Hyperbot is built around a different design principle: every analysis should produce a structured rationale that makes its assumptions visible, its exit conditions concrete, and its confidence level honest. If the market is ambiguous, the system says so. If a setup is technically valid but violates your risk tolerance, it flags that explicitly. If there's nothing to do, it tells you to sit on your hands -- with the same rigor it uses for actionable setups.
 
-If the answer is "don't trade," it says that too. Clearly. With reasons.
+This is a research and learning framework for exploring how explainable AI systems can assist human trading workflows through contextual reasoning, risk awareness, and multi-layer market interpretation.
+
+---
+
+## How the Pipeline Works
+
+<p align="center">
+  <img src="docs/images/workflow_pipeline.png" alt="Analysis Pipeline" width="400"/>
+</p>
+
+Every analysis runs through a six-stage pipeline:
+
+1. **Market Data Feed** -- Live OHLCV candles from the Hyperliquid exchange API
+2. **5-Layer Technical Analysis** -- Five independent engines score the market from different angles (trend, momentum, volatility, structure, mean reversion)
+3. **Consensus Aggregator** -- Counts agreements, computes weighted averages, applies decision rules
+4. **Macro Context Layer** -- Overlays institutional positioning data from the broader ecosystem
+5. **Risk Engine** -- Applies your risk tolerance profile to the proposed position
+6. **Explainable Trade Rationale** -- Structures everything into a readable breakdown with explicit invalidity conditions
+
+The output is not a signal. It's a document that explains what the market looks like, why the layers agree or disagree, and what would need to change for the analysis to become invalid.
 
 ---
 
@@ -110,6 +129,20 @@ The bot only proceeds when both `approve: true` and `confidence: high` are retur
 
 ---
 
+## Example Outputs
+
+The `examples/` directory contains complete, representative outputs showing what the framework actually produces. These aren't sanitized demos -- they show the full pipeline output including cases where the system says "do nothing" and cases where the risk layer rejects a technically valid setup.
+
+| Example | Outcome | What It Demonstrates |
+|---|---|---|
+| [BTC Long Setup](examples/btc_long_setup.md) | Approved | Clean 4/5 agreement, full rationale with FVG structural anchor |
+| [ETH No Setup](examples/eth_no_setup.md) | Stand Aside | 0/5 agreement, framework correctly identifying ambiguous market |
+| [SOL Short -- Risk Rejected](examples/sol_short_risk_rejected.md) | Flagged | Technically valid 4/5 short rejected by conservative risk profile |
+
+The ETH example is arguably the most important one. Any system can tell you to buy when indicators are screaming. The real test is whether it can tell you to sit on your hands when the market is ambiguous.
+
+---
+
 ## Where This Fits
 
 This repository is part of a larger ecosystem of finance-AI research tools. Each repo handles a different layer of the analysis stack:
@@ -168,12 +201,16 @@ hyperbot-ai-trading-claude-skill/
     exchange_client.py       # Hyperliquid API client (testnet default)
     llm_filter.py            # Claude LLM meta-filter
   tests/
-    test_strategies.py       # Automated test suite
+    test_strategies.py       # Automated test suite (25 tests)
+  examples/
+    btc_long_setup.md        # Full BTC long rationale (approved)
+    eth_no_setup.md          # ETH stand-aside analysis (no trade)
+    sol_short_risk_rejected.md # SOL short rejected by risk layer
   skills/
     ai-trading-skill/
       SKILL.md               # AI agent instruction manual
   docs/
-    images/                  # Documentation images
+    images/                  # Documentation images and diagrams
   analyze.py                 # Live market analysis with rationale output
   backtest.py                # Walk-forward historical backtester
   pnl_calc.py                # Compounding equity models calculator
@@ -224,10 +261,30 @@ python3 backtest.py --days 30
 
 ---
 
-## A Note on Risk
+## Limitations and Disclaimers
 
-Financial trading involves substantial risk. This framework is an educational and research tool designed to make trading analysis more transparent and explainable. It is not financial advice.
+This section exists because serious research tools are honest about their boundaries.
 
-Always run on Testnet before committing capital. Always define your invalidation conditions before entering a trade. Always know exactly how much you're risking.
+**What this framework is:**
+- An educational and research tool for exploring explainable AI in trading workflows
+- A system for structuring market analysis into transparent, auditable rationales
+- A framework for learning multi-strategy consensus design, risk profiling, and LLM-assisted decision auditing
+
+**What this framework is not:**
+- Financial advice
+- A guaranteed profit system
+- A replacement for professional risk management
+- A production-grade trading system for live capital without extensive personal validation
+
+**Known limitations:**
+- **AI uncertainty**: The LLM meta-filter (Claude) is a probabilistic system. Its audit quality depends on prompt design and the model's training distribution. It can miss edge cases.
+- **Institutional data latency**: The institutional context module uses stub data in standalone mode. Live institutional flow data (13F filings, sector flows) is inherently delayed by weeks to months.
+- **Indicator lag**: All technical indicators used (EMA, RSI, MACD, Bollinger Bands) are lagging by design. They describe what has happened, not what will happen.
+- **Single exchange**: Currently designed for Hyperliquid only. Extending to other exchanges requires adapting the exchange client.
+- **Backtesting limitations**: Walk-forward simulation does not account for slippage, partial fills, or liquidity depth. Real execution will differ from simulated results.
+
+**Risk acknowledgment:**
+
+Financial trading involves substantial risk of loss. This software is provided as an experimental research tool. Always run on Testnet before committing any capital. Always define your invalidation conditions before entering a trade. Always understand exactly how much you are risking on every position.
 
 The goal of this project is not to make trading easy. It's to make trading thinking visible.
