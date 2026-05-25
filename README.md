@@ -108,15 +108,27 @@ Instead of relying on one indicator and hoping for the best, Hyperbot runs five 
 
 **3. Bollinger Band Squeeze** -- Detects low-volatility compression. Markets coil before they move. This layer identifies when volatility is historically tight and watches for the expansion that follows.
 
+<p align="center">
+  <img src="docs/images/volatility_squeeze.png" alt="Volatility Squeeze Expansion" width="600"/>
+</p>
+
 **4. Liquidity Imbalance (Market Structure)** -- Analyzes structural price inefficiencies to find liquidity gaps in the market where institutional participants left footprints. Validates fills with strict close-based confirmation, not wick noise.
 
 **5. MACD Momentum** -- Catches the short-term waves. Tracks MACD crossovers and histogram acceleration to confirm that momentum is actually behind the move, not just price noise.
+
+<p align="center">
+  <img src="docs/images/consensus_heatmap.png" alt="Consensus Aggregator Heatmap" width="600"/>
+</p>
 
 A trade setup only becomes actionable when **the majority of these layers agree** and the confidence score in the winning direction meaningfully exceeds the opposing side. The framework calls this the **Consensus Aggregator**, and it exists specifically to prevent low-conviction entries.
 
 ---
 
 ## The Risk-Awareness Layer
+
+<p align="center">
+  <img src="docs/images/risk_scoring_gauge.png" alt="Risk Profile Gauges" width="600"/>
+</p>
 
 Generating a setup is only half the job. The other half is asking: **should you actually take this trade given your current risk state?**
 
