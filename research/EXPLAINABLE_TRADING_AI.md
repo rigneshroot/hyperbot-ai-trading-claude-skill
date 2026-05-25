@@ -79,8 +79,14 @@ flowchart TD
 ### 3.1 Aggregation Logic
 Each layer $i$ outputs a discrete signal $s_i \in \{-1, 0, 1\}$. 
 A setup is only considered structurally valid if the absolute sum of aligned signals meets the strict supermajority threshold:
-$$ \sum_{i=1}^{5} s_i \ge 3 \quad (Bullish) $$
-$$ \sum_{i=1}^{5} s_i \le -3 \quad (Bearish) $$
+
+$$
+\sum_{i=1}^{5} s_i \ge 3 \quad (\text{Bullish})
+$$
+
+$$
+\sum_{i=1}^{5} s_i \le -3 \quad (\text{Bearish})
+$$
 
 ---
 
@@ -93,11 +99,15 @@ A critical innovation of Hyperbot is evaluating setups against dynamic risk prof
 
 ### 4.1 Dynamic Stop-Loss Calculation
 Stop losses are never hardcoded percentages. They are volatility-adjusted using the Average True Range (ATR).
-$$ StopLoss_{long} = Entry - (ATR \times 1.5) $$
+$$
+\text{StopLoss}_{\text{long}} = \text{Entry} - (\text{ATR} \times 1.5)
+$$
 
 ### 4.2 Account Preservation Sizing
 Position size is mathematically derived from the maximum tolerable loss, ensuring that wide stops result in smaller positions, normalizing risk across assets.
-$$ Size = \frac{Account Balance \times Max Risk \%}{Entry Price - StopLoss Price} $$
+$$
+\text{Size} = \frac{\text{Account Balance} \times \text{Max Risk \%}}{\text{Entry Price} - \text{StopLoss Price}}
+$$
 
 If the resulting Risk/Reward ratio is lower than the threshold required by the active Risk Profile (e.g., `< 1:2.0` for a Moderate profile), the system **rejects the trade**, explicitly explaining that the technicals are valid but the risk constraints are broken.
 
