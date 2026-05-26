@@ -19,7 +19,7 @@
 
 ---
 
-## ⚡ Run in 60 Seconds
+## Run in 60 Seconds
 
 You can run a complete multi-layer analysis on any asset straight from your terminal.
 
@@ -37,7 +37,7 @@ python main.py --symbol BTC --interval 4h --risk-profile moderate
 
 ## Why This Exists
 
-📄 **Read the short research doc:** [Explainable AI for Multi-Layer Trading Rationale Generation](research/EXPLAINABLE_TRADING_AI.md)
+**Read the short research doc:** [Explainable AI for Multi-Layer Trading Rationale Generation](research/EXPLAINABLE_TRADING_AI.md)
 
 This project explores a specific question: **what happens when you build a trading analysis system that prioritizes explainability over prediction?**
 
