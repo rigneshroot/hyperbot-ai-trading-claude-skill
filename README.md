@@ -30,7 +30,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Run the analysis for BTC
-python main.py --symbol BTC --interval 4h --risk-profile moderate
+python analyze.py --symbol BTC --interval 4h --risk-profile moderate
 ```
 
 ---

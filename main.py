@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from hyperbot.exchange_client import HyperliquidClient
 from hyperbot.aggregator import SignalAggregator
 from hyperbot.llm_filter import LlmMetaFilter
+from hyperbot.risk_context import RiskContextLayer
 
 # Load environment secrets
 load_dotenv()
@@ -68,6 +69,13 @@ def run_trading_bot():
     parser = argparse.ArgumentParser(description="Hyperbot Execution & Live Trading Daemon")
     parser.add_argument("--symbol", type=str, default=None, help="Coin to trade (e.g. BTC)")
     parser.add_argument("--interval", type=str, default=None, help="Timeframe interval (e.g. 15m)")
+    parser.add_argument(
+        "--risk-profile",
+        type=str,
+        default="moderate",
+        choices=["conservative", "moderate", "aggressive"],
+        help="Risk tolerance profile to apply",
+    )
     parser.add_argument("--loop", action="store_true", help="Run indefinitely in an execution loop")
     args = parser.parse_args()
 
@@ -78,11 +86,6 @@ def run_trading_bot():
     symbol = args.symbol or config.get('symbol', 'BTC')
     interval = args.interval or config.get('interval', '15m')
     
-    print("=========================================================================")
-    print("                      INITIATING HYPERBOT ACTIVE ENGINE                  ")
-    print(f"                      Symbol: {symbol} | Timeframe: {interval}          ")
-    print("=========================================================================")
-
     # Initialize components
     client = HyperliquidClient()
     aggregator = SignalAggregator(config)
@@ -98,10 +101,17 @@ def run_trading_bot():
         state["last_pnl_reset"] = today_iso
         save_bot_state(state)
 
-    # Risk parameters
-    max_position_sizing_pct = 0.20 # Sizing limit (20% of equity)
-    max_daily_loss_pct = -5.0      # Daily circuit breaker cap (-5% equity drawdown)
+    # Risk parameters from RiskContextLayer
+    risk_layer = RiskContextLayer(profile_name=args.risk_profile, daily_pnl_pct=state["daily_pnl_pct"])
+    max_position_sizing_pct = risk_layer.profile["max_position_pct"] / 100.0
+    max_daily_loss_pct = risk_layer.profile["max_daily_loss_pct"]
     min_atr_percent = 0.0005       # Minimum volatility filter (0.05% of price)
+
+    print("=========================================================================")
+    print("                      INITIATING HYPERBOT ACTIVE ENGINE                  ")
+    print(f"                      Symbol: {symbol} | Timeframe: {interval}          ")
+    print(f"                      Risk Profile: {risk_layer.profile_name.upper()}   ")
+    print("=========================================================================")
 
     def execute_tick():
         # Load local state inside tick
@@ -111,6 +121,9 @@ def run_trading_bot():
         if os.getenv("HALT") == "1":
             print("[HALT TRIGGERED] HALT=1 detected in environment. Halting bot operations.")
             return
+
+        # Update daily PnL state in risk layer
+        risk_layer.daily_pnl_pct = curr_state["daily_pnl_pct"]
 
         # 1. Check daily drawdown circuit breaker
         if curr_state["daily_pnl_pct"] <= max_daily_loss_pct:
