@@ -199,8 +199,24 @@ def run_trading_bot():
         # 3. Aggregating signals
         recommendation, signals, metrics = aggregator.aggregate(df)
         
+        # Print strategy signal details to user so they see the whole thinking process
+        threshold = config.get('agree_threshold', 50)
+        print(f"\n[{datetime.utcnow().strftime('%H:%M:%S')}] --- Active Tick Strategy Scoring Matrix ---")
+        print(f"{'Strategy':<22} | {'Buy':>5} | {'Sell':>5} | {'Regime':<14} | Reason")
+        print("-" * 95)
+        for name, sig in signals.items():
+            clean = name.replace("_", " ").title()
+            b_str = f"{'*' if sig.buy_confidence >= threshold else ' '}{sig.buy_confidence}%"
+            s_str = f"{'*' if sig.sell_confidence >= threshold else ' '}{sig.sell_confidence}%"
+            reason = sig.reason if len(sig.reason) <= 55 else sig.reason[:52] + "..."
+            print(f"{clean:<22} | {b_str:>5} | {s_str:>5} | {sig.regime:<14} | {reason}")
+        print("-" * 95)
+        print(f"Consensus: {recommendation.upper():<12}  "
+              f"Buy: {metrics['agree_buy']}/5   Sell: {metrics['agree_sell']}/5   "
+              f"Avg Buy: {metrics['avg_buy']:.1f}%   Avg Sell: {metrics['avg_sell']:.1f}%\n")
+
         if recommendation == 'stand_aside':
-            print(f"[{datetime.utcnow().strftime('%H:%M:%S')}] Analysis completed. Recommendation is STAND ASIDE. (Buy {metrics['agree_buy']}/5, Sell {metrics['agree_sell']}/5)")
+            print(f"[{datetime.utcnow().strftime('%H:%M:%S')}] Analysis completed. Recommendation is STAND ASIDE. No setup identified.")
             return
 
         # 4. Signal detected. Compute SL/TP details
