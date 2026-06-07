@@ -211,6 +211,36 @@ def run_trading_bot():
             reason = sig.reason if len(sig.reason) <= 55 else sig.reason[:52] + "..."
             print(f"{clean:<22} | {b_str:>5} | {s_str:>5} | {sig.regime:<14} | {reason}")
         print("-" * 95)
+        
+        # Compute voting metrics explanation
+        min_agree = config.get('min_agree', 3)
+        avg_buy = metrics['avg_buy']
+        avg_sell = metrics['avg_sell']
+        agree_buy = metrics['agree_buy']
+        agree_sell = metrics['agree_sell']
+        
+        # Long criteria check
+        long_cond1 = agree_buy >= min_agree
+        long_cond2 = avg_buy >= (threshold * 0.8)
+        long_cond3 = avg_buy > (avg_sell + 15)
+        
+        # Short criteria check
+        short_cond1 = agree_sell >= min_agree
+        short_cond2 = avg_sell >= (threshold * 0.8)
+        short_cond3 = avg_sell > (avg_buy + 15)
+        
+        print("Consensus Aggregator Rules Evaluation:")
+        print(f"  Thresholds -> Single Agree: {threshold}%, Min Agreed Strategies: {min_agree}/5")
+        print(f"  Bullish Rules (Long):")
+        print(f"    - Strats Agree: {agree_buy} >= {min_agree} [{'PASS' if long_cond1 else 'FAIL'}]")
+        print(f"    - Avg Buy Strength: {avg_buy:.1f}% >= {(threshold * 0.8):.1f}% [{'PASS' if long_cond2 else 'FAIL'}]")
+        print(f"    - Buy/Sell Spread: Avg Buy {avg_buy:.1f}% > Avg Sell {avg_sell:.1f}% + 15 [{'PASS' if long_cond3 else 'FAIL'}]")
+        print(f"  Bearish Rules (Short):")
+        print(f"    - Strats Agree: {agree_sell} >= {min_agree} [{'PASS' if short_cond1 else 'FAIL'}]")
+        print(f"    - Avg Sell Strength: {avg_sell:.1f}% >= {(threshold * 0.8):.1f}% [{'PASS' if short_cond2 else 'FAIL'}]")
+        print(f"    - Sell/Buy Spread: Avg Sell {avg_sell:.1f}% > Avg Buy {avg_buy:.1f}% + 15 [{'PASS' if short_cond3 else 'FAIL'}]")
+        print("-" * 95)
+        
         print(f"Consensus: {recommendation.upper():<12}  "
               f"Buy: {metrics['agree_buy']}/5   Sell: {metrics['agree_sell']}/5   "
               f"Avg Buy: {metrics['avg_buy']:.1f}%   Avg Sell: {metrics['avg_sell']:.1f}%\n")
